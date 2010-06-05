@@ -941,13 +941,13 @@ let print_ast_in_xml channel argument argument2=
 			if (not(List.exists (fun x -> x = !varname) dontwant)) then
 				print_str_item Format.str_formatter parse_tree;
 			print_endline "<varocc>";
-			print_endline ("expr: "^(!varExpr));
+			(*print_endline ("expr: "^(!varExpr));
 			print_endline ("mod: "^(!varModule));
 			print_endline ("level: "^(string_of_int !varlevel));
 			print_endline ("name: "^(!varname));
 			print_endline ("classname: "^(!varClass));
 			print_endline ("nbtrouve: "^(string_of_int (List.length !listvars)));
-			List.iter (fun x -> print_endline(fst(x))) !listmodule;
+			List.iter (fun x -> print_endline(fst(x))) !listmodule;*)
 			let currlist = ref [] in
 			let templist = ref (List.rev !listvars) in
 			let found = ref false in
