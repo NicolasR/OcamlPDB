@@ -451,7 +451,12 @@ and print_expr f  = function (* The type of expressions                         
 	(* 3.14 *) (** Float *)
 	| ExFlo(loc, name) -> ()
 	(* for s = e to/downto e do { e } *) (** For loop *)
-	| ExFor(loc, name, expr1, expr2, meta_bool1, expr3) -> print_expr f expr1; print_expr f expr2; print_expr f expr3
+	| ExFor(loc, name, expr1, expr2, meta_bool1, expr3) -> 
+		(** Variable déclarée avec name -> faire les tests comme pour idlid 
+				Manque récupération loc **)
+		print_expr f expr1; 
+		print_expr f expr2; 
+		print_expr f expr3
 	(* fun [ mc ] *) (** Function with match case *)
 	| ExFun(loc, match_case1) -> 
 		if (!level > !maxlevel) then
@@ -768,8 +773,8 @@ and print_str_item f = function (* The type of structure items                  
 	| StOpn(loc, ident1) -> print_ident f false ident1
 	(* type t *)
 	| StTyp(loc, ctyp1) -> 
-		maxlevel := !maxlevel - 1;
-		level := !level -1;
+		(*maxlevel := !maxlevel - 1;
+		level := !level -1;*)
 		print_ctyp f ctyp1
 	(* value (rec)? bi *)
 	| StVal(loc, meta_bool1, binding1) -> 
@@ -963,7 +968,6 @@ let print_ast_in_xml channel argument argument2=
 				end
 				else
 				begin
-					print_endline hdl.expr;
 					if (hdl.expr = "McArr" && hdl.level = !varlevel) then
 						currlist := []
 					else
@@ -971,7 +975,6 @@ let print_ast_in_xml channel argument argument2=
 				end;
 				templist := List.tl !templist;
 			done;
-			print_endline ("TEST: "^(string_of_int (List.length !currlist)));		
 			
 			while (not(!found) && (List.length !templist)>0)  do
 				let hdl = (List.hd !templist) in
