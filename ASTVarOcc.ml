@@ -683,6 +683,7 @@ and print_module_expr f = function (* The type of module expressions            
 	| MeStr(loc, str_item1) -> print_str_item f str_item1
 	(* (me : mt) *)
 	| MeTyc(loc, module_expr1, module_type1) -> 
+		lastExpr := "MeTyc"::!lastExpr;
 		let newmodule = !modulename in
 		print_module_expr f module_expr1;
 		let templist = !listvars in
@@ -697,6 +698,9 @@ and print_module_expr f = function (* The type of module expressions            
 			end
 			else
 				listvars := List.append !listvars (x::[]);) templist;
+		let correctmod = List.find (fun x -> fst(x) = !modulename) !listmodule in
+		listmodule := List.filter (fun x -> (fst(x) <> !modulename) && (fst(x) <> newmodule)) !listmodule;
+		listmodule := List.append !listmodule ((newmodule,snd(correctmod))::[]);
 	  modulename := newmodule;
 		print_module_type f module_type1
 	(* $s$ *)
@@ -734,9 +738,24 @@ and print_str_item f = function (* The type of structure items                  
 	| StMod(loc, name, module_expr1) ->
 		let levelbefore = !level in
 		let namemodule = escape_string name in
+		let startlist = ref (List.length !listvars) in
 		modulename := namemodule;
 		print_module_expr f module_expr1;
-		listmodule := List.append !listmodule ((namemodule, !maxlevel)::[]);
+		let endlist = List.length !listvars in
+		let templist = ref (List.rev !listvars) in
+		let found = ref false in
+		let correctlevel = ref !maxlevel in
+		while (!startlist < endlist && not(!found)) do
+			let var = List.hd !templist in
+			templist := List.tl !templist;
+			if (var.expr = "StValLeft" || var.expr = "StMod" || var.expr = "StCls") then
+			begin
+				found := true;
+				correctlevel := var.level;
+			end;
+			startlist := !startlist +1;
+		done;
+		listmodule := List.append !listmodule ((namemodule, !correctlevel)::[]);
 		maxlevel := levelbefore;
 		level := levelbefore;
 		modulename := ""
@@ -938,19 +957,22 @@ let print_ast_in_xml channel argument argument2=
 				if (hdl.isLoc) then
 				begin
 					isLocfound := true;
-					if ((hdl.expr = "McArr" && hdl.letnumber = !varletnumber) || hdl.expr = "StValLeft") then
+					if ((hdl.expr = "McArr" && hdl.letnumber = !varletnumber) || hdl.expr = "StValLeft" ) then
 						found := true;
 					currlist := List.append !currlist (hdl::[]);
 				end
 				else
 				begin
-					if (hdl.expr = "McArr") then
+					print_endline hdl.expr;
+					if (hdl.expr = "McArr" && hdl.level = !varlevel) then
 						currlist := []
 					else
 						currlist := List.append !currlist (hdl::[])
 				end;
 				templist := List.tl !templist;
 			done;
+			print_endline ("TEST: "^(string_of_int (List.length !currlist)));		
+			
 			while (not(!found) && (List.length !templist)>0)  do
 				let hdl = (List.hd !templist) in
 				if ((hdl.expr = "McArr" && hdl.letnumber = !varletnumber) || hdl.expr = "StValLeft" && hdl.level = !varlevel && hdl.isInModule = !varModule) then
@@ -984,7 +1006,6 @@ let print_ast_in_xml channel argument argument2=
 							end;	
 					end;
 					
-
 					while((List.length !currlist)>0) do
 						let elem = (List.hd !currlist) in
 					  	let level = elem.level in
